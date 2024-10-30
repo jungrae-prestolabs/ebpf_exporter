@@ -27,7 +27,7 @@ RUN make -j $(nproc) -C /build/ebpf_exporter build && \
 FROM debian:bookworm as examples_builder
 
 RUN apt-get update && \
-    apt-get install -y clang-16 make
+    apt-get install -y clang-16 make llvm libelf-dev
 
 COPY --from=libbpf_builder /build/ebpf_exporter/libbpf /build/ebpf_exporter/libbpf
 
@@ -53,3 +53,23 @@ COPY --from=ebpf_exporter_builder /usr/share/misc/pci.ids /usr/share/misc/pci.id
 COPY --from=examples_builder /build/ebpf_exporter/examples /examples
 
 ENTRYPOINT ["/ebpf_exporter"]
+
+# Final production image without shell
+# Stage 4: Final image with bash for debugging
+FROM debian:bookworm-slim as ebpf_exporter_with_examples_debug
+
+# Install bash and necessary utilities
+RUN apt-get update && \
+    apt-get install -y bash
+
+# Copy the ebpf_exporter binary
+COPY --from=ebpf_exporter_builder /build/ebpf_exporter/ebpf_exporter /ebpf_exporter
+
+# Copy pci.ids
+COPY --from=ebpf_exporter_builder /usr/share/misc/pci.ids /usr/share/misc/pci.ids
+
+# Copy example eBPF programs
+COPY --from=examples_builder /build/ebpf_exporter/examples /examples
+
+# Set entrypoint to bash for debugging
+ENTRYPOINT ["/bin/bash"]

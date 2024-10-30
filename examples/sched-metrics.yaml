@@ -1,0 +1,17 @@
+metrics:
+  histograms:
+    - name: wait_time_hist
+      help: Histogram of CPU wait times per process
+      bucket_type: exp2
+      bucket_min: 0
+      bucket_max: 63
+      bucket_multiplier: 1e-9  # Convert nanoseconds to seconds
+      labels:
+        - name: pid
+          size: 4
+          decoders:
+            - name: uint
+        - name: bucket
+          size: 4
+          decoders:
+            - name: uint
